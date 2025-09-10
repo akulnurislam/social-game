@@ -4,6 +4,6 @@ export class AppException extends Error {
   constructor(message: string, status: number) {
     super(message);
     this.status = status;
-    Object.setPrototypeOf(this, new.target.prototype); // fix prototype chain
+    Object.setPrototypeOf(this, new.target.prototype);
   }
 }

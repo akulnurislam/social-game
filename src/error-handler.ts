@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from 'express';
+import type { NextFunction, Request, Response } from 'express';
 import { AppException } from './exceptions/app-exception';
 
 export function errorHandler(err: any, _req: Request, res: Response, _next: NextFunction) {
