@@ -32,7 +32,7 @@ router.get('/', async (req, res) => {
   const limit = Number(req.query['limit']) || 20;
   const offset = Number(req.query['offset']) || 0;
   const groups = await service.listGroups(limit, offset);
-  return res.json(groups);
+  res.json(groups);
 });
 
 /**
@@ -41,8 +41,8 @@ router.get('/', async (req, res) => {
  */
 router.get('/:groupId', async (req, res) => {
   const { groupId } = req.params;
-  const group = await service.getGroupById(groupId!);
-  return res.json(group);
+  const group = await service.getGroupById(groupId);
+  res.json(group);
 });
 
 /**
@@ -51,8 +51,8 @@ router.get('/:groupId', async (req, res) => {
  */
 router.get('/:groupId/members', async (req, res) => {
   const { groupId } = req.params;
-  const members = await service.listMembers(groupId!);
-  return res.json(members);
+  const members = await service.listMembers(groupId);
+  res.json(members);
 });
 
 /**
@@ -61,8 +61,8 @@ router.get('/:groupId/members', async (req, res) => {
  */
 router.post('/:groupId/join', async (req, res) => {
   const { groupId } = req.params;
-  const result = await service.joinGroup(groupId!, req.playerId);
-  return res.json(result);
+  const result = await service.joinGroup(groupId, req.playerId);
+  res.json(result);
 });
 
 /**
@@ -71,8 +71,8 @@ router.post('/:groupId/join', async (req, res) => {
  */
 router.post('/:groupId/leave', async (req, res) => {
   const { groupId } = req.params;
-  const result = await service.leaveGroup(groupId!, req.playerId);
-  return res.json(result);
+  const result = await service.leaveGroup(groupId, req.playerId);
+  res.json(result);
 });
 
 export default router;
