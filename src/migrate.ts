@@ -1,6 +1,5 @@
-import 'dotenv/config';
-import { readFileSync } from 'fs'
-import { Pool } from 'pg'
+import { readFileSync } from 'fs';
+import { Pool } from 'pg';
 
 async function migrate() {
   const pool = new Pool({
