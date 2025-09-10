@@ -14,22 +14,13 @@ const router = Router();
  * Body: { "username": "dragon_slayer" }
  */
 router.post('/', async (req, res) => {
-  try {
-    const { username } = req.body ?? {};
-    if (!username) {
-      return res.status(400).json({ error: 'username required' });
-    }
-
-    const player = await service.createPlayer(username);
-    return res.status(201).json(player);
-  } catch (err: any) {
-    if (err.code === '23505') {
-      // unique_violation
-      return res.status(409).json({ error: 'username already exists' });
-    }
-    console.error(err);
-    return res.status(500).json({ error: 'internal server error' });
+  const { username } = req.body ?? {};
+  if (!username) {
+    return res.status(400).json({ error: 'username required' });
   }
+
+  const player = await service.createPlayer(username);
+  return res.status(201).json(player);
 });
 
 /**
@@ -37,17 +28,8 @@ router.post('/', async (req, res) => {
  * Header: X-Player-ID: <uuid>
  */
 router.get('/me', async (req, res) => {
-  try {
-    const player = await service.getPlayerById(req.playerId);
-    if (!player) {
-      return res.status(404).json({ error: 'player not found' });
-    }
-
-    return res.json(player);
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: 'internal server error' });
-  }
+  const player = await service.getPlayerById(req.playerId);
+  return res.json(player);
 });
 
 export default router;

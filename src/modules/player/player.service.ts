@@ -1,3 +1,4 @@
+import { PlayerNotFoundException } from '../../exceptions/player-not-found-exception';
 import type { Player } from './player';
 import type { PlayerRepository } from './player.repository';
 
@@ -9,7 +10,12 @@ export class PlayerService {
     return this.repo.create(username);
   }
 
-  async getPlayerById(id: string): Promise<Player | null> {
-    return this.repo.findById(id);
+  async getPlayerById(playerId: string): Promise<Player> {
+    const player = await this.repo.findById(playerId);
+    if (!player) {
+      throw new PlayerNotFoundException(playerId);
+    }
+
+    return player;
   }
 }
