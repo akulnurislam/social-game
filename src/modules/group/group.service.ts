@@ -27,7 +27,8 @@ export class GroupService {
   }
 
   async listMembers(groupId: string): Promise<GroupMember[]> {
-    return this.repo.listMembers(groupId);
+    const group = await this.getGroupById(groupId);
+    return this.repo.listMembers(group.id);
   }
 
   async joinGroup(groupId: string, playerId: string) {
