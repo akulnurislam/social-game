@@ -1,0 +1,40 @@
+{
+  "name": "social-game",
+  "version": "1.0.0",
+  "description": "social game",
+  "homepage": "https://github.com/akulnurislam/social-game#readme",
+  "bugs": {
+    "url": "https://github.com/akulnurislam/social-game/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/akulnurislam/social-game.git"
+  },
+  "license": "ISC",
+  "author": "Akul Nurislam <nurislamimanudin@gmail.com>",
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc",
+    "start": "node dist/server.js",
+    "dev": "tsx watch src/server.ts",
+    "migrate": "tsx src/migrate.ts"
+  },
+  "devDependencies": {
+    "@types/dotenv": "^6.1.1",
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.1",
+    "@types/pg": "^8.15.5",
+    "@types/validator": "^13.15.3",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.2",
+    "express": "^5.1.0",
+    "ioredis": "^5.7.0",
+    "pg": "^8.16.3",
+    "validator": "^13.15.15"
+  }
+}
