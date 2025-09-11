@@ -1,4 +1,55 @@
 # social-game
+## Project Structure
+<details>
+<summary>Structure</summary>
+
+```
+├── package.json
+├── tsconfig.json
+├── docker-compose.yml
+├── .env.example
+├── README.md
+├── API.md
+├── ARCHITECTURE.md
+├── migrations
+│   └── 001_init.sql
+└── src
+    ├── index.ts              # Entry point
+    ├── server.ts             # API bootstrap (Express)
+    ├── ws-server.ts          # WebSocket bootstrap
+    ├── app.ts                # Express app setup (middlewares, routes)
+    ├── migrate.ts            # Run migrations
+    ├── error-handler.ts      # Centralized error handler
+    │
+    ├── core                  # Core infrastructure
+    │   ├── db.ts             # Postgres pool/connection
+    │   ├── redis.ts          # Redis pub/sub client
+    │   └── ws.ts             # WebSocket setup & events
+    │
+    ├── exceptions            # Custom exceptions
+    │   └── app-exception.ts  # Base exception
+    │
+    ├── middlewares           # Express middlewares
+    │   └── authentication.ts # Auth middleware
+    │
+    ├── types                 # Shared types & augmentations
+    │   └── express.d.ts      # Extend Express Request/Response types
+    │
+    └── modules               # Feature modules
+        ├── player
+        │   ├── player.ts            # Entity (interfaces, constants)
+        │   ├── player.repository.ts # DB queries
+        │   ├── player.service.ts    # Business logic
+        │   ├── player.controller.ts # REST (Express routes)
+        │   └── player.ws.ts         # WebSocket handlers
+        │
+        ├── group
+        ├── battle
+        ├── leaderboard
+        ├── social
+        └── bot
+```
+</details>
 
 ## Anti-Cheat & Cooldown System (with Redis)
 
@@ -54,4 +105,107 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
 | `join:player:{battleId}:{playerId}` | Temporary join marker | 5s |
 | `lock:battle:{battleId}:begin` | Concurrency lock for beginBattle | 5s |
 | `meta:battle:{battleId}:started` | Store battle start time | ∞ |
+</details>
+
+<details>
+<summary>Implementation Flow</summary>
+
+### Implementation Flow
+
+1. **Battle Lifecycle**
+   ```mermaid
+   stateDiagram-v2
+    [*] --> Pending
+    Pending --> Running: beginBattle (lock acquired)
+    Running --> Finished: finishBattle (>=30s elapsed)
+    Finished --> [*]
+   ```
+2. **Create Battle**
+   ```mermaid
+   sequenceDiagram
+    participant Player
+    participant Service
+    participant Redis
+    participant DB
+
+    Player->>Service: POST /battles
+    Service->>Redis: GET cd:group:{groupId}:battle
+    alt Cooldown exists
+     Redis-->>Service: TTL > 0
+     Service-->>Player: Error (group on cooldown)
+    else No cooldown
+     Service->>Redis: SET cd:group:{groupId}:battle (TTL=60s)
+     Service->>DB: INSERT battle
+     Service->>DB: INSERT battle_members (creator as initiator)
+     Service-->>Player: Battle created
+    end
+   ```
+3. **Join Battle**
+   ```mermaid
+   sequenceDiagram
+    participant Player
+    participant Service
+    participant Redis
+    participant DB
+
+    Player->>Service: POST /battles/:id/join
+    Service->>DB: SELECT battle (check state)
+    alt battle finished
+     DB-->>Service: state=finished
+     Service-->>Player: Error (cannot join finished battle)
+    else
+     Service->>Redis: SETNX join:player:{battleId}:{playerId}
+     alt already joined
+      Redis-->>Service: Key exists
+      Service-->>Player: Error (duplicate join)
+     else success
+      Service->>DB: INSERT battle_members
+      Service-->>Player: Joined battle
+     end
+    end
+   ```
+4. **Begin Battle**
+   ```mermaid
+   sequenceDiagram
+    participant Player
+    participant Service
+    participant Redis
+    participant DB
+
+    Player->>Service: POST /battles/:id/begin
+    Service->>Redis: SETNX lock:battle:{id}:begin
+    alt lock exists
+     Redis-->>Service: lock present
+     Service-->>Player: Error (battle already started)
+    else success
+     Service->>DB: UPDATE battle.state = running
+     Service->>Redis: HSET battle:{id} started=timestamp
+     Service-->>Player: Battle started
+    end
+   ```
+5. **Finish Battle**
+   ```mermaid
+   sequenceDiagram
+    participant Player
+    participant Service
+    participant Redis
+    participant DB
+
+    Player->>Service: POST /battles/:id/finish
+    Service->>DB: SELECT battle (check state)
+    alt not running
+     DB-->>Service: state != running
+     Service-->>Player: Error (cannot finish)
+    else running
+     Service->>Redis: HGET battle:{id} started
+     Service->>Service: check elapsed >= 30s
+     alt too early
+      Service-->>Player: Error (finish too soon)
+     else valid
+      Service->>DB: UPDATE battle.state = finished
+      Service->>DB: UPDATE leaderboard (optional)
+      Service-->>Player: Battle finished
+     end
+    end
+   ```
 </details>
