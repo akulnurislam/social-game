@@ -220,46 +220,46 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
    ```
 3. **Join Battle**
    ```mermaid
-sequenceDiagram
-    participant Player
-    participant Service
-    participant DB
-    participant Redis
-
-    Player->>Service: POST /battles/:id/join
-    Service->>Redis: INCR ratelimit:{playerId}:join_battle (TTL=60s)
-    alt join attempts > 3
-        Redis-->>Service: count exceeded
-        Service-->>Player: Error 429 (Too many join attempts)
-    else ok
-        Service->>DB: findById(battleId)
-        alt not found
-            DB-->>Service: null
-            Service-->>Player: Error 404 (Battle not found)
-        else found
-            alt state = finished
-                DB-->>Service: battle.state=finished
-                Service-->>Player: Error 400 (Cannot join finished battle)
-            else running/pending
-                Service->>DB: listMembers(battleId)
-                alt already joined
-                    DB-->>Service: player exists
-                    Service-->>Player: Error 400 (Player already joined)
-                else not joined
-
-                    Service->>DB: Get attackerMembers, defenderMembers
-                    Service->>Service: validate group membership
-                    alt invalid membership
-                        Service-->>Player: Error 400 (must belong to exactly one side)
-                    else valid
-                        Service->>Redis: PUBLISH battle:join { battleId, playerId }
-                        Service->>DB: INSERT battle_members (playerId, role)
-                        Service-->>Player: Joined battle
-                    end
-                end
-            end
-        end
-    end
+   sequenceDiagram
+       participant Player
+       participant Service
+       participant DB
+       participant Redis
+   
+       Player->>Service: POST /battles/:id/join
+       Service->>Redis: INCR ratelimit:{playerId}:join_battle (TTL=60s)
+       alt join attempts > 3
+           Redis-->>Service: count exceeded
+           Service-->>Player: Error 429 (Too many join attempts)
+       else ok
+           Service->>DB: findById(battleId)
+           alt not found
+               DB-->>Service: null
+               Service-->>Player: Error 404 (Battle not found)
+           else found
+               alt state = finished
+                   DB-->>Service: battle.state=finished
+                   Service-->>Player: Error 400 (Cannot join finished battle)
+               else running/pending
+                   Service->>DB: listMembers(battleId)
+                   alt already joined
+                       DB-->>Service: player exists
+                       Service-->>Player: Error 400 (Player already joined)
+                   else not joined
+   
+                       Service->>DB: Get attackerMembers, defenderMembers
+                       Service->>Service: validate group membership
+                       alt invalid membership
+                           Service-->>Player: Error 400 (must belong to exactly one side)
+                       else valid
+                           Service->>Redis: PUBLISH battle:join { battleId, playerId }
+                           Service->>DB: INSERT battle_members (playerId, role)
+                           Service-->>Player: Joined battle
+                       end
+                   end
+               end
+           end
+       end
    ```
 4. **Begin Battle**
    ```mermaid
