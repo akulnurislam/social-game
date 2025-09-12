@@ -1,7 +1,76 @@
-# social-game
+# Social Game
+
+A simple social game backend built with Node.js, PostgreSQL, and Redis, featuring:
+
+- Players: Create and manage player accounts.
+- Groups: Join or create groups to play together.
+- Battles: Challenge other groups with cooldowns and anti-cheat protection.
+- Leaderboard: Track rankings and achievements.
+- Social: Features like gifting and help between players.
+- Bot: Telegram integration for smooth onboarding and interaction.
+
+The system uses **Redis locks**, **cooldowns**, and **guards** to enforce fair play and prevent cheating during battles
+
+## Tech Stack
+- Node.js (v22.19.0+) with TypeScript
+- PostgreSQL (v16.2+) as the relational database
+- Redis (v8.2.0+) for locks, cooldowns, and caching
+- Express.js for REST APIs
+- WebSocket for real-time communication
+- Docker Compose for local development setup
+
+## Requirements
+- Node.js: `>=22.19.0`
+- PostgreSQL: `>=16.2`
+- Redis: `>=8.2.0`
+
+## Getting Started
+<details open>
+<summary>Getting Started</summary>
+
+### Running
+1. Copy environment file
+   ```
+   cp .env.example .env
+   ```
+   Fill in your database, Redis, and other settings.
+
+2. Run database migration (first time only)
+   ```
+   npm run migrate
+   ```
+
+3. Start development server
+   ```
+   npm run dev
+   ```
+
+4. Build for production
+   ```
+   npm run build
+   ```
+
+5. Run in production
+   - Run both API + WebSocket in one instance:
+     ```
+     npm start
+     ```
+   - Run API and WebSocket separately:
+     ```
+     npm run start:api
+     npm run start:ws
+     ```
+
+### Testing
+Run unit tests with
+```
+npm test
+```
+</details>
+
 ## Project Structure
 <details>
-<summary>Structure</summary>
+<summary>Project Structure</summary>
 
 ```
 ├── package.json
@@ -107,7 +176,7 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
 | `meta:battle:{battleId}:started` | Store battle start time | ∞ |
 </details>
 
-<details>
+<details open>
 <summary>Implementation Flow</summary>
 
 ### Implementation Flow
@@ -115,97 +184,97 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
 1. **Battle Lifecycle**
    ```mermaid
    stateDiagram-v2
-    [*] --> Pending
-    Pending --> Running: beginBattle (lock acquired)
-    Running --> Finished: finishBattle (>=30s elapsed)
-    Finished --> [*]
+       [*] --> Pending
+       Pending --> Running: beginBattle (lock acquired)
+       Running --> Finished: finishBattle (>=30s elapsed)
+       Finished --> [*]
    ```
 2. **Create Battle**
    ```mermaid
    sequenceDiagram
-    participant Player
-    participant Service
-    participant Redis
-    participant DB
-
-    Player->>Service: POST /battles
-    Service->>Redis: GET cd:group:{groupId}:battle
-    alt Cooldown exists
-     Redis-->>Service: TTL > 0
-     Service-->>Player: Error (group on cooldown)
-    else No cooldown
-     Service->>Redis: SET cd:group:{groupId}:battle (TTL=60s)
-     Service->>DB: INSERT battle
-     Service->>DB: INSERT battle_members (creator as initiator)
-     Service-->>Player: Battle created
-    end
+       participant Player
+       participant Service
+       participant Redis
+       participant DB
+   
+       Player->>Service: POST /battles
+       Service->>Redis: GET cd:group:{groupId}:battle
+       alt Cooldown exists
+           Redis-->>Service: TTL > 0
+           Service-->>Player: Error (group on cooldown)
+       else No cooldown
+           Service->>Redis: SET cd:group:{groupId}:battle (TTL=60s)
+           Service->>DB: INSERT battle
+           Service->>DB: INSERT battle_members (creator as initiator)
+           Service-->>Player: Battle created
+       end
    ```
 3. **Join Battle**
    ```mermaid
    sequenceDiagram
-    participant Player
-    participant Service
-    participant Redis
-    participant DB
-
-    Player->>Service: POST /battles/:id/join
-    Service->>DB: SELECT battle (check state)
-    alt battle finished
-     DB-->>Service: state=finished
-     Service-->>Player: Error (cannot join finished battle)
-    else
-     Service->>Redis: SETNX join:player:{battleId}:{playerId}
-     alt already joined
-      Redis-->>Service: Key exists
-      Service-->>Player: Error (duplicate join)
-     else success
-      Service->>DB: INSERT battle_members
-      Service-->>Player: Joined battle
-     end
-    end
+       participant Player
+       participant Service
+       participant Redis
+       participant DB
+   
+       Player->>Service: POST /battles/:id/join
+       Service->>DB: SELECT battle (check state)
+       alt battle finished
+           DB-->>Service: state=finished
+           Service-->>Player: Error (cannot join finished battle)
+       else
+           Service->>Redis: SETNX join:player:{battleId}:{playerId}
+           alt already joined
+               Redis-->>Service: Key exists
+               Service-->>Player: Error (duplicate join)
+           else success
+               Service->>DB: INSERT battle_members
+               Service-->>Player: Joined battle
+           end
+       end
    ```
 4. **Begin Battle**
    ```mermaid
    sequenceDiagram
-    participant Player
-    participant Service
-    participant Redis
-    participant DB
-
-    Player->>Service: POST /battles/:id/begin
-    Service->>Redis: SETNX lock:battle:{id}:begin
-    alt lock exists
-     Redis-->>Service: lock present
-     Service-->>Player: Error (battle already started)
-    else success
-     Service->>DB: UPDATE battle.state = running
-     Service->>Redis: HSET battle:{id} started=timestamp
-     Service-->>Player: Battle started
-    end
+       participant Player
+       participant Service
+       participant Redis
+       participant DB
+   
+       Player->>Service: POST /battles/:id/begin
+       Service->>Redis: SETNX lock:battle:{id}:begin
+       alt lock exists
+           Redis-->>Service: lock present
+           Service-->>Player: Error (battle already started)
+       else success
+           Service->>DB: UPDATE battle.state = running
+           Service->>Redis: HSET battle:{id} started=timestamp
+           Service-->>Player: Battle started
+       end
    ```
 5. **Finish Battle**
    ```mermaid
    sequenceDiagram
-    participant Player
-    participant Service
-    participant Redis
-    participant DB
-
-    Player->>Service: POST /battles/:id/finish
-    Service->>DB: SELECT battle (check state)
-    alt not running
-     DB-->>Service: state != running
-     Service-->>Player: Error (cannot finish)
-    else running
-     Service->>Redis: HGET battle:{id} started
-     Service->>Service: check elapsed >= 30s
-     alt too early
-      Service-->>Player: Error (finish too soon)
-     else valid
-      Service->>DB: UPDATE battle.state = finished
-      Service->>DB: UPDATE leaderboard (optional)
-      Service-->>Player: Battle finished
-     end
-    end
+       participant Player
+       participant Service
+       participant Redis
+       participant DB
+   
+       Player->>Service: POST /battles/:id/finish
+       Service->>DB: SELECT battle (check state)
+       alt not running
+           DB-->>Service: state != running
+           Service-->>Player: Error (cannot finish)
+       else running
+           Service->>Redis: HGET battle:{id} started
+           Service->>Service: check elapsed >= 30s
+           alt too early
+               Service-->>Player: Error (finish too soon)
+           else valid
+               Service->>DB: UPDATE battle.state = finished
+               Service->>DB: UPDATE leaderboard (optional)
+               Service-->>Player: Battle finished
+           end
+       end
    ```
 </details>
