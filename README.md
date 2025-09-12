@@ -131,35 +131,37 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
 ### Core Concepts (Battle)
 
 1. **Per-Player Rate Limits**
-   - Prevent spamming of actions (join/attack/etc.)
-   - Redis key: `rate:player:{playerId}:{action}`
-   - Example: `rate:player:123:join`
-   - Stores an increment counter with an expiry window (e.g., 10s).
-   - If limit exceeded → `AppException('Too many actions', 429)`.
+   - Prevent spamming of actions (create/join/attack/etc.)
+   - Redis key: `ratelimit:{playerId}:{action}`
+   - Example: `ratelimit:123:create_battle`
+   - Stores an increment counter with an expiry window (e.g., 60s).
+   - If limit exceeded → `AppException('Too many battle creation attempts. Try again later.', 429)`.
 2. **Group Cooldowns**
-   - Prevents groups from starting battles too frequently.
-   - Redis key: `cd:group:{groupId}:battle`
-   - Example: `cd:group:abc:battle`
-   - Set with TTL (e.g., 60s) when a group creates a battle.
-   - If another battle is requested before cooldown expires → `AppException('Group on cooldown', 429)`.
+   - Prevents groups from creating battles too frequently.
+   - Redis key: `cooldown:attack:{groupId}`
+   - Example: `cooldown:attack:abc`
+   - Set with TTL (e.g., 5m) when a group creates a battle.
+   - If another battle is requested before cooldown expires → `AppException('Attacking group is on cooldown. Try later.', 429)`.
 3. **Join Guards**
+   - Can only join one battle within a 60-second window.
    - Prevents cheating in participant lists:
      - Cannot join a finished battle.
      - Cannot join both attacker & defender sides.
      - Cannot double-join the same battle.
    - Uses DB checks and Redis temporary markers
-   - Redis key: `join:player:{battleId}:{playerId}`
+   - Redis key: `ratelimit:{playerId}:join_battle`
+   - Example: `ratelimit:123:join_battle`
    - Helps avoid race conditions in high-traffic environments.
 4. **Start Locks**
    - Prevents concurrent race conditions where two players try to start the same battle simultaneously.
    - Redis key: `lock:battle:{battleId}:begin`
    - Uses **SETNX + TTL** (atomic lock).
-   - If lock exists → `AppException('Battle is already being started', 409)`.
+   - If lock exists → `AppException('Battle is already being started.', 409)`.
 5. **Finish Guards**
    - Prevents finishing a battle too soon after starting (anti-abuse).
-   - Enforce **minimum battle duration** (e.g., 30s).
-   - Redis key: `meta:battle:{battleId}:started`
-   - Checked before allowing finish.
+   - Enforce **minimum battle duration** (e.g., 60s).
+   - Check from `started_at` field in `battle` entity.
+   - If `now - battle.started_at < 60s` → `AppException('Battle cannot be finished yet.', 400)`
 </details>
 
 <details>
@@ -169,11 +171,9 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
 
 | Key pattern | Purpose | TTL |
 | --- | --- | --- |
-| `rate:player:{playerId}:{action}` | Per-player action rate limit | 10s |
-| `cd:group:{groupId}:battle` | Group cooldown after starting battle | 60s |
-| `join:player:{battleId}:{playerId}` | Temporary join marker | 5s |
-| `lock:battle:{battleId}:begin` | Concurrency lock for beginBattle | 5s |
-| `meta:battle:{battleId}:started` | Store battle start time | ∞ |
+| `ratelimit:${playerId}:${action}` | Per-player action rate limit | 60 seconds |
+| `cooldown:attack:{groupId}` | Group cooldown after creating battle | 5 minutes |
+| `lock:battle:{battleId}:begin` | Concurrency lock for beginBattle | 5 seconds |
 </details>
 
 <details open>
@@ -186,7 +186,7 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
    stateDiagram-v2
        [*] --> Pending
        Pending --> Running: beginBattle (lock acquired)
-       Running --> Finished: finishBattle (>=30s elapsed)
+       Running --> Finished: finishBattle (>=60s elapsed)
        Finished --> [*]
    ```
 2. **Create Battle**
@@ -196,42 +196,70 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
        participant Service
        participant Redis
        participant DB
-   
+
        Player->>Service: POST /battles
-       Service->>Redis: GET cd:group:{groupId}:battle
-       alt Cooldown exists
-           Redis-->>Service: TTL > 0
-           Service-->>Player: Error (group on cooldown)
-       else No cooldown
-           Service->>Redis: SET cd:group:{groupId}:battle (TTL=60s)
-           Service->>DB: INSERT battle
-           Service->>DB: INSERT battle_members (creator as initiator)
-           Service-->>Player: Battle created
+
+       Service->>DB: Get attackerMembers, defenderMembers
+       alt Creator invalid membership
+           Service-->>Player: Error 400 (must be in exactly one group)
+       else Valid membership
+           Service->>Redis: INCR ratelimit:{playerId}:create_battle (TTL=60s)
+           alt Player exceeded limit
+               Service-->>Player: Error 429 (Too many battle creation attempts)
+           else Within limit
+               Service->>Redis: SETNX cooldown:attack:{attackerGroupId} (TTL=5m)
+               alt Group on cooldown
+                   Service-->>Player: Error 429 (attacker group on cooldown)
+               else Cooldown acquired
+                   Service->>DB: INSERT battle (attacker vs defender)
+                   Service->>DB: INSERT battle_members (creator as initiator)
+                   Service-->>Player: Battle created
+               end
+           end
        end
    ```
 3. **Join Battle**
    ```mermaid
-   sequenceDiagram
-       participant Player
-       participant Service
-       participant Redis
-       participant DB
-   
-       Player->>Service: POST /battles/:id/join
-       Service->>DB: SELECT battle (check state)
-       alt battle finished
-           DB-->>Service: state=finished
-           Service-->>Player: Error (cannot join finished battle)
-       else
-           Service->>Redis: SETNX join:player:{battleId}:{playerId}
-           alt already joined
-               Redis-->>Service: Key exists
-               Service-->>Player: Error (duplicate join)
-           else success
-               Service->>DB: INSERT battle_members
-               Service-->>Player: Joined battle
-           end
-       end
+sequenceDiagram
+    participant Player
+    participant Service
+    participant DB
+    participant Redis
+
+    Player->>Service: POST /battles/:id/join
+    Service->>Redis: INCR ratelimit:{playerId}:join_battle (TTL=60s)
+    alt join attempts > 3
+        Redis-->>Service: count exceeded
+        Service-->>Player: Error 429 (Too many join attempts)
+    else ok
+        Service->>DB: findById(battleId)
+        alt not found
+            DB-->>Service: null
+            Service-->>Player: Error 404 (Battle not found)
+        else found
+            alt state = finished
+                DB-->>Service: battle.state=finished
+                Service-->>Player: Error 400 (Cannot join finished battle)
+            else running/pending
+                Service->>DB: listMembers(battleId)
+                alt already joined
+                    DB-->>Service: player exists
+                    Service-->>Player: Error 400 (Player already joined)
+                else not joined
+
+                    Service->>DB: Get attackerMembers, defenderMembers
+                    Service->>Service: validate group membership
+                    alt invalid membership
+                        Service-->>Player: Error 400 (must belong to exactly one side)
+                    else valid
+                        Service->>Redis: PUBLISH battle:join { battleId, playerId }
+                        Service->>DB: INSERT battle_members (playerId, role)
+                        Service-->>Player: Joined battle
+                    end
+                end
+            end
+        end
+    end
    ```
 4. **Begin Battle**
    ```mermaid
@@ -240,16 +268,32 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
        participant Service
        participant Redis
        participant DB
-   
+
        Player->>Service: POST /battles/:id/begin
-       Service->>Redis: SETNX lock:battle:{id}:begin
-       alt lock exists
-           Redis-->>Service: lock present
-           Service-->>Player: Error (battle already started)
-       else success
-           Service->>DB: UPDATE battle.state = running
-           Service->>Redis: HSET battle:{id} started=timestamp
-           Service-->>Player: Battle started
+       Service->>DB: findById(battleId)
+       alt Battle not found
+           DB-->>Service: null
+           Service-->>Player: Error 404 (Battle not found)
+       else Battle exists
+           alt State != pending
+               Service-->>Player: Error 400 (Battle cannot be started)
+           else Pending
+               Service->>Redis: SETNX lock:battle:{battleId}:begin (TTL=5s)
+               alt Lock not acquired
+                   Service-->>Player: Error 409 (Another request is starting)
+               else Lock acquired
+                   Service->>DB: listMembers(battleId)
+                   Service->>Service: check authorization (initiator or owner)
+                   alt Not authorized
+                       Service-->>Player: Error 403 (Not authorized)
+                   else Authorized
+                       Service->>DB: UPDATE battle (state=running, started=now)
+                       Service->>Redis: PUBLISH battle:begin { battleId }
+                       Service-->>Player: Battle started
+                   end
+                   Service->>Redis: DEL lock:battle:{battleId}:begin (releaseLock)
+               end
+           end
        end
    ```
 5. **Finish Battle**
@@ -257,24 +301,36 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
    sequenceDiagram
        participant Player
        participant Service
-       participant Redis
        participant DB
+       participant Redis
    
        Player->>Service: POST /battles/:id/finish
        Service->>DB: SELECT battle (check state)
-       alt not running
-           DB-->>Service: state != running
-           Service-->>Player: Error (cannot finish)
-       else running
-           Service->>Redis: HGET battle:{id} started
-           Service->>Service: check elapsed >= 30s
-           alt too early
-               Service-->>Player: Error (finish too soon)
-           else valid
-               Service->>DB: UPDATE battle.state = finished
-               Service->>DB: UPDATE leaderboard (optional)
-               Service-->>Player: Battle finished
-           end
-       end
+       alt not found
+            DB-->>Service: null
+            Service-->>Player: Error 404 (Battle not found)
+        else found
+            alt not running
+                DB-->>Service: state != running
+                Service-->>Player: Error 400 (cannot finish)
+            else running
+                Service->>Service: check elapsed >= 60s (battle.started_at)
+                alt too early
+                    Service-->>Player: Error 400 (finish too soon)
+                else valid
+                    Service->>DB: listMembers(battleId)
+                    Service->>Service: check authorization (initiator or owner)
+                    alt not authorized
+                        Service-->>Player: Error 403 (not authorized)
+                    else authorized
+                        Service->>DB: UPDATE battle.state = finished
+                        Service->>Service: pick random winner + score
+                        Service->>DB: UPSERT leaderboard (winnerGroupId, score, updatedAt)
+                        Service->>Redis: PUBLISH battle:finished { battleId, winnerGroupId, score }
+                        Service-->>Player: Battle finished
+                    end
+                end
+        end
+    end
    ```
 </details>
