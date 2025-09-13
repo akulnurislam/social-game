@@ -211,7 +211,7 @@ The backend uses Redis Pub/Sub to broadcast battle events. Each battle-related a
 | `battle:finished` | Triggered when a battle finishes. | `{ "battleId": "uuid", "winnerGroupId": "uuid", "score": 100 }` |
 </details>
 
-<details>
+<details open>
 <summary>Implementation Flow</summary>
 
 ### Implementation Flow
