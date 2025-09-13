@@ -41,21 +41,27 @@ This test simulates a scenario with four players:
 
 ## Instructions
 
-### 1. Connect All Players via WebSocket
+### 1. Run API and WebSocket Server
+
+```
+npm run dev
+```
+
+### 2. Connect All Players via WebSocket
 
 Simulate all four players by connecting them to the WebSocket server:
 
 ```
-npm run client:ws <PlayerA_ID>
-npm run client:ws <PlayerB_ID>
-npm run client:ws <PlayerC_ID>
-npm run client:ws <PlayerD_ID>
+npm run client:ws 11111111-1111-1111-1111-111111111111
+npm run client:ws 22222222-2222-2222-2222-222222222222
+npm run client:ws 33333333-3333-3333-3333-333333333333
+npm run client:ws 44444444-4444-4444-4444-444444444444
 ```
 
 - **Player A** and **Player B** → will actively participate in the battle.
 - **Player C** and **Player D** → will only observe leaderboard updates.
 
-### 2. Run the Battle Test
+### 3. Run the Battle Test
 
 Execute the automated test script to simulate the full battle flow:
 
@@ -76,9 +82,8 @@ This will perform the following sequence:
    - Triggers `battle:finished` event.
    - Triggers `leaderboard` event.
 
-### 3. Verify Realtime Updates
+### 4. Verify Realtime Updates
 - **Player A** → receives all battle events + `leaderboard`.
-- **Player B** → receives `battle:begin`, `battle:finished` + `leaderboard`.\
-  if **a new player** joins the same battle after **Player B** has joined, will receives `battle:join` also.
+- **Player B** → receives all battle events + `leaderboard`.\
 - **Player C** → only receives `leaderboard`.
 - **Player D** → only receives `leaderboard`.
