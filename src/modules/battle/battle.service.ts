@@ -7,6 +7,7 @@ import { redisPublisher } from '../../core/redis';
 import { AppException } from '../../exceptions/app-exception';
 import {
   acquireLock,
+  deleteBattleMembers,
   rateLimitKey,
   releaseLock,
   setBattleMember,
@@ -58,6 +59,7 @@ export class BattleService {
     // auto-add creator as participant (role: initiator)
     if (battle) {
       await this.repo.addMember(battle.id, creatorPlayerId, 'initiator');
+      await setBattleMember(creatorPlayerId, battle.id);
     }
 
     return battle;
@@ -88,7 +90,6 @@ export class BattleService {
         throw new AppException('Not authorized to start this battle.', 403);
       }
 
-      await setBattleMember(callerPlayerId, battleId);
       await redisPublisher.publish(CHANNEL_BATTLE_BEGIN, JSON.stringify({ battleId }));
       return await this.repo.updateState(battleId, 'running', { started: new Date() });
     } finally {
@@ -129,6 +130,7 @@ export class BattleService {
     const score = this.randomScore();
 
     await this.leaderboardService.upsertLeaderboard(winnerGroupId, score);
+    await deleteBattleMembers(battleId);
     await updateLeaderboard(winnerGroupId, score);
     await redisPublisher.publish(CHANNEL_BATTLE_FINISHED, JSON.stringify({ battleId, winnerGroupId, score }));
 
