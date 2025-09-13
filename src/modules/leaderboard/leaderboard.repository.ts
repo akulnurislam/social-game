@@ -30,4 +30,14 @@ export class LeaderboardRepository {
     );
     return result.rows;
   }
+
+  async findAll(limit = 20, offset = 0): Promise<Leaderboard[]> {
+    const result = await this.pool.query<Leaderboard>(
+      `SELECT * FROM leaderboard
+       ORDER BY score DESC
+       LIMIT $1 OFFSET $2`,
+      [limit, offset]
+    );
+    return result.rows;
+  }
 }
