@@ -275,10 +275,10 @@ The backend uses Redis Pub/Sub to broadcast battle events. Each battle-related a
            DB-->>Service: null
            Service-->>Player: Error 404 (battle not found)
        else found
-           alt not running
-               DB-->>Service: state != running
+           alt finished
+               DB-->>Service: state == finished
                Service-->>Player: Error 400 (cannot join)
-           else running
+           else running or pending
                Service->>DB: listMembers(battleId)
                alt already joined
                    DB-->>Service: player exists
