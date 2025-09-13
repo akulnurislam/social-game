@@ -3,12 +3,13 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- Players
 CREATE TABLE IF NOT EXISTS players (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  telegram_id bigint UNIQUE NOT NULL,
   username text UNIQUE NOT NULL,
   created_at timestamptz DEFAULT now()
 );
 
--- Index to quickly lookup by username
-CREATE INDEX IF NOT EXISTS idx_players_username ON players (username);
+-- Index to quickly lookup by telegram_id
+CREATE INDEX IF NOT EXISTS idx_players_telegram_id ON players (telegram_id);
 
 -- Groups
 CREATE TABLE IF NOT EXISTS groups (
@@ -89,4 +90,4 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_leaderboard_group_id ON leaderboard (group
 CREATE INDEX IF NOT EXISTS idx_leaderboard_score_desc ON leaderboard (score DESC);
 
 -- Index for fast recency queries
-CREATE INDEX IF NOT EXISTS idx_leaderboard_updated_at ON leaderboard (updated_at);
+CREATE INDEX IF NOT EXISTS idx_leaderboard_updated_at ON leaderboard (updated_at DESC);

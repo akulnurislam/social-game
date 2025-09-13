@@ -3,11 +3,10 @@ import type { Player } from './player';
 import type { PlayerRepository } from './player.repository';
 
 export class PlayerService {
-  constructor(private repo: PlayerRepository) { }
+  constructor(private readonly repo: PlayerRepository) { }
 
-  async createPlayer(username: string): Promise<Player | null> {
-    // TODO: Add validation
-    return this.repo.create(username);
+  async createPlayer(username: string, telegramId: number): Promise<Player | null> {
+    return this.repo.create(username, telegramId);
   }
 
   async getPlayerById(playerId: string): Promise<Player> {
@@ -17,5 +16,9 @@ export class PlayerService {
     }
 
     return player;
+  }
+
+  getPlayerByTelegramId(telegramId: number): Promise<Player | null> {
+    return this.repo.findByTelegramId(telegramId);
   }
 }

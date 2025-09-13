@@ -2,14 +2,14 @@ import type { Pool } from 'pg';
 import type { Player } from './player';
 
 export class PlayerRepository {
-  constructor(private pool: Pool) { }
+  constructor(private readonly pool: Pool) { }
 
-  async create(username: string): Promise<Player | null> {
+  async create(username: string, telegramId: number): Promise<Player | null> {
     const result = await this.pool.query<Player>(
-      `INSERT INTO players (username) 
-       VALUES ($1) 
-       RETURNING id, username, created_at`,
-      [username]
+      `INSERT INTO players (username, telegram_id)
+       VALUES ($1, $2)
+       RETURNING *`,
+      [username, telegramId]
     );
     return result.rows[0] ?? null;
   }
@@ -18,6 +18,14 @@ export class PlayerRepository {
     const result = await this.pool.query<Player>(
       `SELECT id, username, created_at FROM players WHERE id = $1`,
       [id]
+    );
+    return result.rows[0] ?? null;
+  }
+
+  async findByTelegramId(telegramId: number): Promise<Player | null> {
+    const result = await this.pool.query<Player>(
+      `SELECT * FROM players WHERE telegram_id = $1`,
+      [telegramId]
     );
     return result.rows[0] ?? null;
   }
