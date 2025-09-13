@@ -23,7 +23,8 @@
     "start:bot": "node -r dotenv/config dist/index.js bot",
     "dev": "tsx --require dotenv/config --watch src/index.ts",
     "migrate": "tsx --require dotenv/config scripts/migrate.ts",
-    "client:ws": "tsx --require dotenv/config scripts/ws-client.ts"
+    "client:ws": "tsx --require dotenv/config scripts/ws-client.ts",
+    "integration:battle": "tsx --require dotenv/config scripts/integration-battle.ts"
   },
   "devDependencies": {
     "@types/dotenv": "^6.1.1",
