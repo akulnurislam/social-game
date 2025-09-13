@@ -55,10 +55,10 @@ export async function releaseLock(lockName: string, token: string) {
 export async function setBattleMember(playerId: string, battleId: string) {
   const memberBattleKey = `member:battle:${battleId}`;
 
-  // Add player only if set does NOT exist
-  const added = await redis.sadd(memberBattleKey, playerId, 'NX');
+  await redis.sadd(memberBattleKey, playerId);
 
-  if (added) {
+  const members = await getBattleMembers(battleId);
+  if (members.length === 1) {
     // Only set TTL if this was the first addition
     // 30 minutes
     await redis.expire(memberBattleKey, 60 * 30);
@@ -69,6 +69,11 @@ export async function getBattleMembers(battleId: string): Promise<string[]> {
   // ['uuid-player-1', 'uuid-player-2', 'uuid-player-3']
   const memberBattleKey = `member:battle:${battleId}`;
   return redis.smembers(memberBattleKey);
+}
+
+export async function deleteBattleMembers(battleId: string): Promise<number> {
+  const memberBattleKey = `member:battle:${battleId}`;
+  return redis.del(memberBattleKey);
 }
 
 export async function updateLeaderboard(groupId: string, score: number) {
