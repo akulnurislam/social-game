@@ -14,9 +14,9 @@ export const pool = new Pool({
 
 pool.connect()
   .then(client => {
-    console.log('Postgres connected');
+    console.log('[Postgres] connected');
     client.release();
   })
   .catch(err => {
-    console.error('Postgres connection error', err.stack);
+    console.error('[Postgres] error', err.stack);
   });
