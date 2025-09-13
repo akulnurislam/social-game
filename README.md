@@ -203,7 +203,7 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
 | `cooldown:attack:{groupId}` | Group cooldown after creating battle | 5 minutes |
 | `lock:battle:{battleId}:begin` | Concurrency lock for beginBattle | 5 seconds |
 | `leaderboard:24` | Sorted set tracking group scores for the last 24 hours | 24 hours |
-| `member:battle:{battleId}` | Store all player IDs that are participating in a specific battle. Only players who started the battle and joined are added. | 30 minutes or **Battle finished** |
+| `member:battle:{battleId}` | Store all player IDs that are participating in a specific battle. Only players who created the battle and joined are added. | 30 minutes or **Battle finished** |
 </details>
 
 <details>
@@ -256,6 +256,7 @@ The backend uses Redis Pub/Sub to broadcast battle events. Each battle-related a
                else Cooldown acquired
                    Service->>DB: INSERT battle (attacker vs defender)
                    Service->>DB: INSERT battle_members (creator as initiator)
+                   Service->>Redis: SADD member:battle:{battleId} <playerId>
                    Service-->>Player: Battle created
                end
            end
@@ -331,7 +332,6 @@ The backend uses Redis Pub/Sub to broadcast battle events. Each battle-related a
                        Service-->>Player: Error 403 (not authorized)
                    else Authorized
                        Service->>DB: UPDATE battle (state=running, started=now)
-                       Service->>Redis: SADD member:battle:{battleId} <playerId>
                        Service->>Redis: PUBLISH battle:begin { battleId }
                        Service-->>Player: Battle started
                    end
@@ -351,31 +351,32 @@ The backend uses Redis Pub/Sub to broadcast battle events. Each battle-related a
        Player->>Service: POST /battles/:id/finish
        Service->>DB: findById(battleId)
        alt not found
-            DB-->>Service: null
-            Service-->>Player: Error 404 (battle not found)
-        else found
-            alt not running
-                DB-->>Service: state != running
-                Service-->>Player: Error 400 (cannot finish)
-            else running
-                Service->>Service: check elapsed >= 60s (battle.started_at)
-                alt too early
-                    Service-->>Player: Error 400 (finish too soon)
-                else valid
-                    Service->>DB: listMembers(battleId)
-                    Service->>Service: check authorization (initiator or owner)
-                    alt not authorized
-                        Service-->>Player: Error 403 (not authorized)
-                    else authorized
-                        Service->>DB: UPDATE battle.state = finished
-                        Service->>Service: pick random winner + score
-                        Service->>DB: UPSERT leaderboard (winnerGroupId, score, updatedAt)
-                        Service->>Redis: ZINCRBY leaderboard:24h <score> <winnerGroupId>
-                        Service->>Redis: PUBLISH battle:finished { battleId, winnerGroupId, score }
-                        Service-->>Player: Battle finished
-                    end
-                end
-        end
-    end
+           DB-->>Service: null
+           Service-->>Player: Error 404 (battle not found)
+       else found
+           alt not running
+               DB-->>Service: state != running
+               Service-->>Player: Error 400 (cannot finish)
+           else running
+               Service->>Service: check elapsed >= 60s (battle.started_at)
+               alt too early
+                   Service-->>Player: Error 400 (finish too soon)
+               else valid
+                   Service->>DB: listMembers(battleId)
+                   Service->>Service: check authorization (initiator or owner)
+                   alt not authorized
+                       Service-->>Player: Error 403 (not authorized)
+                   else authorized
+                       Service->>DB: UPDATE battle.state = finished
+                       Service->>Service: pick random winner + score
+                       Service->>DB: UPSERT leaderboard (winnerGroupId, score, updatedAt)
+                       Service->>Redis: DEL member:battle:{battleId}
+                       Service->>Redis: ZINCRBY leaderboard:24h <score> <winnerGroupId>
+                       Service->>Redis: PUBLISH battle:finished { battleId, winnerGroupId, score }
+                       Service-->>Player: Battle finished
+                   end
+               end
+           end
+       end
    ```
 </details>
