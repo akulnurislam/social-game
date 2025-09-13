@@ -79,14 +79,12 @@ export async function deleteBattleMembers(battleId: string): Promise<number> {
 export async function updateLeaderboard(groupId: string, score: number) {
   const leaderboardKey = 'leaderboard:24h';
 
-  // First time add key if not exist
-  const added = await redis.zadd(leaderboardKey, 'NX', score, groupId);
-  if (added) {
-    // 24 hours
+  await redis.zincrby(leaderboardKey, score, groupId);
+  // The leaderboard should reset based on the change of day (midnight).
+  // Future implementation may use a daily cron job or a date-based key.
+  const ttl = await redis.ttl(leaderboardKey);
+  if (ttl === -1) {
     await redis.expire(leaderboardKey, 24 * 60 * 60);
-  } else {
-    // Increment group score in the leaderboard
-    await redis.zincrby(leaderboardKey, score, groupId); // increment existing
   }
 }
 
