@@ -4,32 +4,81 @@ This guide explains how to simulate players, groups, and battles, and how to ver
 real-time updates through the WebSocket server.
 
 <details open>
-<summary>Testing Flow</summary>
+<summary>Testing Flow for Battle & Leaderboard Realtime Updates</summary>
 
-## Testing Flow
+## Testing Flow for Battle & Leaderboard Reatime Updates
 
 ```mermaid
 flowchart LR
     A[Player A] -. member .- GA(Group A)
-    A -->|1. initial battle| B1[[Battle]]
-    B -->|2. join battle| B1[[Battle]]
+    GA -. involved .- B1
+    A -->|1. initial battle| B1(((Battle)))
+    B -->|2. join battle| B1
+    GB -. involved .- B1
     B[Player B] -. member .- GB(Group B)
-    B1 --> GA
-    B1 --> WS@{ shape: lean-r, label: Realtime Update (ws) }
-    B1 --> GB
+    B1 --> WS@{ shape: das, label: Realtime Update (WS) }
     WS --> EV1@{ shape: docs, label: "Events:
     - battle:begin
     - battle:join
-    - battle:finish" }
+    - battle:finished" }
     WS --> EV2@{ shape: docs, label: "Events:
     - leaderboard" }
-    EV1 --> X1[Player A]
-    EV1 --> X2[Player B]
-    EV2 --> X1
-    EV2 --> X2
-    EV2 --> X3[Player C]
-    EV2 --> X4[Player D]
+    EV1 & EV2 --> X1[Player A] & X2[Player B]
+    EV2 --> X3[Player C] & X4[Player D]
 ```
 
+This test simulates a scenario with four players:
+- **Player A** (Group A)
+- **Player B** (Group B)
+- **Player C** (not involved in battle, just observing leaderboard)
+- **Player D** (not involved in battle, just observing leaderboard)
 
 </details>
+
+> [!NOTE]
+> All players (A, B, C, D) and groups (A, B) used in this simulation are already inserted into the database as mock data.\
+> No additional setup is required.
+
+## Instructions
+
+### 1. Connect All Players via WebSocket
+
+Simulate all four players by connecting them to the WebSocket server:
+
+```
+npm run client:ws <PlayerA_ID>
+npm run client:ws <PlayerB_ID>
+npm run client:ws <PlayerC_ID>
+npm run client:ws <PlayerD_ID>
+```
+
+- **Player A** and **Player B** → will actively participate in the battle.
+- **Player C** and **Player D** → will only observe leaderboard updates.
+
+### 2. Run the Battle Test
+
+Execute the automated test script to simulate the full battle flow:
+
+```
+npm run integration:battle
+```
+
+This will perform the following sequence:
+1. **Player A** creates a battle:
+   - Group A vs Group B.
+2. **Player B** joins the battle:
+   - Triggers `battle:join` event.
+3. **Player A** begins the battle:
+   - Battle officially starts.
+   - Triggers `battle:begin` event.
+4. **Player A** finishes the battle:
+   - A random winner and score are generated.
+   - Triggers `battle:finished` event.
+   - Triggers `leaderboard` event.
+
+### 3. Verify Realtime Updates
+- **Player A** → receives all battle events + `leaderboard`.
+- **Player B** → receives `battle:begin`, `battle:finished` + `leaderboard`.\
+  if **a new player** joins the same battle after **Player B** has joined, will receives `battle:join` also.
+- **Player C** → only receives `leaderboard`.
+- **Player D** → only receives `leaderboard`.
