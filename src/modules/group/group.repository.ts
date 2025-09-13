@@ -2,7 +2,7 @@ import type { Pool } from 'pg';
 import type { Group, GroupMember } from './group';
 
 export class GroupRepository {
-  constructor(private pool: Pool) { }
+  constructor(private readonly pool: Pool) { }
 
   async create(name: string, ownerId: string, meta: any = {}): Promise<Group | null> {
     const client = await this.pool.connect();
@@ -59,7 +59,7 @@ export class GroupRepository {
   }
 
   async listMembers(groupId: string): Promise<GroupMember[]> {
-    const result = await this.pool.query(
+    const result = await this.pool.query<GroupMember>(
       `SELECT player_id, role, joined_at FROM group_members WHERE group_id = $1 ORDER BY joined_at ASC`,
       [groupId]
     );

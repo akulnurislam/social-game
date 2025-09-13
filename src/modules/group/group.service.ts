@@ -1,13 +1,14 @@
+import { AppException } from '../../exceptions/app-exception';
 import { GroupNotFoundException } from '../../exceptions/group-not-found-exception';
 import type { Group, GroupMember } from './group';
 import type { GroupRepository } from './group.repository';
 
 export class GroupService {
-  constructor(private repo: GroupRepository) { }
+  constructor(private readonly repo: GroupRepository) { }
 
   async createGroup(name: string, ownerId: string): Promise<Group | null> {
     if (!name || name.length < 3) {
-      throw new Error('Group name must be at least 3 characters');
+      throw new AppException('Group name must be at least 3 characters', 400);
     }
 
     return this.repo.create(name, ownerId);
