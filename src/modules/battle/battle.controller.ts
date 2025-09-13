@@ -23,12 +23,16 @@ const router = Router();
  * Header: X-Player-ID: <uuid>
  */
 router.post('/', async (req, res) => {
-  const { groupAttacker, groupDefender, meta } = req.body ?? {};
+  const {
+    group_attacker: groupAttacker,
+    group_defender: groupDefender,
+    meta,
+  } = req.body ?? {};
   if (!groupAttacker) {
-    return res.status(400).json({ error: 'groupAttacker required' });
+    return res.status(400).json({ error: 'group_attacker required' });
   }
   if (!groupDefender) {
-    return res.status(400).json({ error: 'groupDefender required' });
+    return res.status(400).json({ error: 'group_defender required' });
   }
 
   const battle = await battleService.createBattle(groupAttacker, groupDefender, meta, req.playerId);

@@ -15,15 +15,15 @@ const router = Router();
  * Body: { "username": "dragon_slayer" }
  */
 router.post('/', async (req, res) => {
-  const { username, telegramId } = req.body ?? {};
+  const { username, telegram_id: telegramId } = req.body ?? {};
   if (!username) {
     return res.status(400).json({ error: 'username required' });
   }
   if (!telegramId) {
-    return res.status(400).json({ error: 'telegramId required' });
+    return res.status(400).json({ error: 'telegram_id required' });
   }
   if (!validator.isNumeric(telegramId)) {
-    return res.status(400).json({ error: 'telegramId must be number' });
+    return res.status(400).json({ error: 'telegram_id must be number' });
   }
 
   const player = await service.createPlayer(username, telegramId);

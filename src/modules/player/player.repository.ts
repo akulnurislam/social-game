@@ -16,7 +16,7 @@ export class PlayerRepository {
 
   async findById(id: string): Promise<Player | null> {
     const result = await this.pool.query<Player>(
-      `SELECT id, username, created_at FROM players WHERE id = $1`,
+      `SELECT * FROM players WHERE id = $1`,
       [id]
     );
     return result.rows[0] ?? null;
