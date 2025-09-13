@@ -86,6 +86,7 @@ npm run client:ws <playerId>
 
 - For a detailed system design, see the [Architecture Overview](./ARCHITECTURE.md)
 - For request/response specifications, see the [API Documentation](./API.md)
+- For testing instructions and simulation flows, see the [Testing Guide](./TESTING.md)
 
 ## Project Structure
 <details>
@@ -94,7 +95,6 @@ npm run client:ws <playerId>
 ```
 ├── package.json
 ├── tsconfig.json                    # TypeScript configuration
-├── docker-compose.yml               # Docker setup for services
 ├── .env.example                     # Example environment variables
 ├── README.md
 ├── API.md                           # API reference documentation
@@ -112,9 +112,9 @@ npm run client:ws <playerId>
     ├── index.ts                     # Entry point
     ├── server.ts                    # API bootstrap (Express)
     ├── ws-server.ts                 # WebSocket bootstrap
+    ├── bot.ts                       # Telegram Bot bootstrap
     ├── app.ts                       # Express app setup (middlewares, routes)
-    ├── migrate.ts                   # Run migrations
-    ├── error-handler.ts             # Centralized error handler
+    ├── error-handler.ts             # Centralized error handler (API)
     │
     ├── core                         # Core infrastructure
     │   ├── db.ts                    # Postgres pool/connection
