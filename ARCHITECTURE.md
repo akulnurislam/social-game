@@ -99,8 +99,6 @@ It follows a modular architecture that separates the responsibilities of API han
   - Decouples Telegram from API/WS nodes.  
   - Provides resilience with retries, throttling, and idempotency.  
 
----
-
 ## Monitoring & Analytics
 
 ### Monitoring
@@ -121,8 +119,6 @@ It follows a modular architecture that separates the responsibilities of API han
 - Track events: `battle_started`, `battle_finished`, `leaderboard_view`, etc.  
 - Use pipelines (Segment / Kafka → BigQuery/Redshift).  
 - Key metrics: DAU/MAU, retention, session length, battles per user, conversion rates.  
-
----
 
 ## Next Steps
 
