@@ -1,3 +1,4 @@
+import { startTelegramBot } from './bot';
 import { startApiServer } from './server';
 import { startWsServer } from './ws-server';
 
@@ -13,13 +14,18 @@ switch (arg) {
     startWsServer();
     break;
 
+  case 'bot':
+    startTelegramBot();
+    break;
+
   case undefined:
-    // No param → start both
+    // No param → start all
     startApiServer();
     startWsServer();
+    startTelegramBot();
     break;
 
   default:
-    console.error(`Unknown option '${arg}'. Use 'api' or 'ws'`);
+    console.error(`Unknown option '${arg}'. Use 'api' or 'ws' or 'bot'`);
     process.exit(1);
 }
