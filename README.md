@@ -7,7 +7,7 @@ A simple social game backend built with Node.js, PostgreSQL, and Redis, featurin
 - Battles: Challenge other groups with cooldowns and anti-cheat protection.
 - Leaderboard: Track rankings and achievements.
 - Social: Features like gifting and help between players.
-- Bot: Telegram integration for smooth onboarding and interaction.
+- Bot: Telegram integration for interaction.
 
 The system uses **Redis locks**, **cooldowns**, and **guards** to enforce fair play and prevent cheating during battles
 
@@ -40,9 +40,10 @@ The system uses **Redis locks**, **cooldowns**, and **guards** to enforce fair p
    npm run migrate
    ```
 
-3. Start development server
+3. Start development server\
+   You can also pass an argument to run a specific service `api`, `ws`, or `bot`
    ```
-   npm run dev
+   npm run dev <optional-args>
    ```
 
 4. Build for production
@@ -51,14 +52,21 @@ The system uses **Redis locks**, **cooldowns**, and **guards** to enforce fair p
    ```
 
 5. Run in production
-   - Run both API + WebSocket in one instance:
+   - Run API + WebSocket + Telegram Bot in one instance:
      ```
      npm start
      ```
-   - Run API and WebSocket separately:
+   - Run API only:
      ```
      npm run start:api
+     ```
+   - Run WebSocket only:
+     ```
      npm run start:ws
+     ```
+   - Run Telegram Bot only:
+     ```
+     npm run start:bot
      ```
 
 ### Testing
