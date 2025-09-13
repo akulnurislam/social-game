@@ -13,7 +13,9 @@ esbuild
     external: [
       'express',
       'pg',
-      'ws'
+      'ws',
+      'ioredis',
+      'node-telegram-bot-api',
     ],
   })
   .then(() => {
