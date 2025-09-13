@@ -16,11 +16,12 @@ export async function startTelegramBot() {
   // Define command handlers
   bot.onText(/\/player/, (msg) => handlePlayerCommand(bot, msg));
 
+  // This only for test purpose
+  // on production let this active polling for reconnecting
   bot.on('polling_error', (err: any) => {
     console.error(`[Telegram BOT]`, err.message);
     bot.stopPolling();
   });
-
   bot.on('webhook_error', (err: any) => {
     console.error(`[Telegram BOT]`, err.message);
     bot.closeWebHook();
