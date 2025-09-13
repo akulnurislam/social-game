@@ -66,7 +66,18 @@ Run unit tests with
 ```
 npm test
 ```
+
+### WebSocket test client
+Replace `<playerId>` with a UUID to simulate a player connecting to the WebSocket server.
+```
+npm run client:ws <playerId>
+```
 </details>
+
+## Documentation
+
+- For a detailed system design, see the [Architecture Overview](./ARCHITECTURE.md)
+- For request/response specifications, see the [API Documentation](./API.md)
 
 ## Project Structure
 <details>
@@ -74,46 +85,55 @@ npm test
 
 ```
 ├── package.json
-├── tsconfig.json
-├── docker-compose.yml
-├── .env.example
+├── tsconfig.json                    # TypeScript configuration
+├── docker-compose.yml               # Docker setup for services
+├── .env.example                     # Example environment variables
 ├── README.md
-├── API.md
-├── ARCHITECTURE.md
+├── API.md                           # API reference documentation
+├── ARCHITECTURE.md                  # System architecture overview
+│
 ├── migrations
-│   └── 001_init.sql
+│   └── 001_init.sql                 # Initial database setup: basic schema
+│
+├── scripts
+│   ├── build.ts                     # ESBuild configuration and build script
+│   ├── migrate.ts                   # Script to run database migration files
+│   └── ws-client.ts                 # WebSocket test client
+│
 └── src
-    ├── index.ts              # Entry point
-    ├── server.ts             # API bootstrap (Express)
-    ├── ws-server.ts          # WebSocket bootstrap
-    ├── app.ts                # Express app setup (middlewares, routes)
-    ├── migrate.ts            # Run migrations
-    ├── error-handler.ts      # Centralized error handler
+    ├── index.ts                     # Entry point
+    ├── server.ts                    # API bootstrap (Express)
+    ├── ws-server.ts                 # WebSocket bootstrap
+    ├── app.ts                       # Express app setup (middlewares, routes)
+    ├── migrate.ts                   # Run migrations
+    ├── error-handler.ts             # Centralized error handler
     │
-    ├── core                  # Core infrastructure
-    │   ├── db.ts             # Postgres pool/connection
-    │   ├── redis.ts          # Redis pub/sub client
-    │   └── ws.ts             # WebSocket setup & events
+    ├── core                         # Core infrastructure
+    │   ├── db.ts                    # Postgres pool/connection
+    │   ├── redis.ts                 # Redis pub/sub client
     │
-    ├── exceptions            # Custom exceptions
-    │   └── app-exception.ts  # Base exception
+    ├── exceptions                   # Custom exceptions
+    │   └── app-exception.ts         # Base exception
     │
-    ├── middlewares           # Express middlewares
-    │   └── authentication.ts # Auth middleware
+    ├── middlewares                  # Express middlewares
+    │   └── authentication.ts        # Auth middleware
     │
-    ├── types                 # Shared types & augmentations
-    │   └── express.d.ts      # Extend Express Request/Response types
+    ├── types                        # Shared types & augmentations
+    │   └── express.d.ts             # Extend Express Request/Response types
     │
-    └── modules               # Feature modules
-        ├── player
-        │   ├── player.ts            # Entity (interfaces, constants)
-        │   ├── player.repository.ts # DB queries
-        │   ├── player.service.ts    # Business logic
-        │   ├── player.controller.ts # REST (Express routes)
-        │   └── player.ws.ts         # WebSocket handlers
-        │
-        ├── group
+    ├── constants
+    │   └── redis-channels.ts        # Centralized Redis channel names for publish/subscribe
+    │
+    └── modules                      # Feature modules
         ├── battle
+        │   ├── battle.ts            # Entity (interfaces, constants)
+        │   ├── battle.repository.ts # DB queries
+        │   ├── battle.service.ts    # Business logic
+        │   ├── battle.controller.ts # REST (Express routes)
+        │   └── battle.ws.ts         # WebSocket handlers
+        │
+        ├── player
+        ├── group
         ├── leaderboard
         ├── social
         └── bot
@@ -171,12 +191,27 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
 
 | Key pattern | Purpose | TTL |
 | --- | --- | --- |
-| `ratelimit:${playerId}:${action}` | Per-player action rate limit | 60 seconds |
+| `ratelimit:{playerId}:{action}` | Per-player action rate limit | 60 seconds |
 | `cooldown:attack:{groupId}` | Group cooldown after creating battle | 5 minutes |
 | `lock:battle:{battleId}:begin` | Concurrency lock for beginBattle | 5 seconds |
+| `leaderboard:24` | Sorted set tracking group scores for the last 24 hours | 24 hours |
+| `member:battle:{battleId}` | Store all player IDs that are participating in a specific battle. Only players who started the battle and joined are added. | 30 minutes or **Battle finished** |
 </details>
 
-<details open>
+<details>
+<summary>Redis Pub/Sub Channels</summary>
+
+### Redis Pub/Sub Channels
+The backend uses Redis Pub/Sub to broadcast battle events. Each battle-related action has its own channel:
+
+| Channel | Description | Payload Example |
+| --- | --- | --- |
+| `battle:begin` | Triggered when a battle starts. | `{ "battleId": "uuid" }` |
+| `battle:join` | Triggered when a player joins an ongoing battle. | `{ "battleId": "uuid", "playerId": "uuid" }` |
+| `battle:finished` | Triggered when a battle finishes. | `{ "battleId": "uuid", "winnerGroupId": "uuid", "score": 100 }` |
+</details>
+
+<details>
 <summary>Implementation Flow</summary>
 
 ### Implementation Flow
@@ -205,7 +240,7 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
        else Valid membership
            Service->>Redis: INCR ratelimit:{playerId}:create_battle (TTL=60s)
            alt Player exceeded limit
-               Service-->>Player: Error 429 (Too many battle creation attempts)
+               Service-->>Player: Error 429 (too many battle creation attempts)
            else Within limit
                Service->>Redis: SETNX cooldown:attack:{attackerGroupId} (TTL=5m)
                alt Group on cooldown
@@ -227,33 +262,33 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
        participant Redis
    
        Player->>Service: POST /battles/:id/join
-       Service->>Redis: INCR ratelimit:{playerId}:join_battle (TTL=60s)
-       alt join attempts > 3
-           Redis-->>Service: count exceeded
-           Service-->>Player: Error 429 (Too many join attempts)
-       else ok
-           Service->>DB: findById(battleId)
-           alt not found
-               DB-->>Service: null
-               Service-->>Player: Error 404 (Battle not found)
-           else found
-               alt state = finished
-                   DB-->>Service: battle.state=finished
-                   Service-->>Player: Error 400 (Cannot join finished battle)
-               else running/pending
-                   Service->>DB: listMembers(battleId)
-                   alt already joined
-                       DB-->>Service: player exists
-                       Service-->>Player: Error 400 (Player already joined)
-                   else not joined
-   
+       Service->>DB: findById(battleId)
+       alt not found
+           DB-->>Service: null
+           Service-->>Player: Error 404 (battle not found)
+       else found
+           alt not running
+               DB-->>Service: state != running
+               Service-->>Player: Error 400 (cannot join)
+           else running
+               Service->>DB: listMembers(battleId)
+               alt already joined
+                   DB-->>Service: player exists
+                   Service-->>Player: Error 400 (player already joined)
+               else not joined
+                   Service->>Redis: INCR ratelimit:{playerId}:join_battle (TTL=60s)
+                   alt join attempts > 3
+                       Redis-->>Service: count exceeded
+                       Service-->>Player: Error 429 (too many join attempts)
+                   else ok
                        Service->>DB: Get attackerMembers, defenderMembers
                        Service->>Service: validate group membership
                        alt invalid membership
                            Service-->>Player: Error 400 (must belong to exactly one side)
                        else valid
-                           Service->>Redis: PUBLISH battle:join { battleId, playerId }
                            Service->>DB: INSERT battle_members (playerId, role)
+                           Service->>Redis: SADD member:battle:{battleId} <playerId>
+                           Service->>Redis: PUBLISH battle:join { battleId, playerId }
                            Service-->>Player: Joined battle
                        end
                    end
@@ -273,21 +308,22 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
        Service->>DB: findById(battleId)
        alt Battle not found
            DB-->>Service: null
-           Service-->>Player: Error 404 (Battle not found)
+           Service-->>Player: Error 404 (battle not found)
        else Battle exists
            alt State != pending
-               Service-->>Player: Error 400 (Battle cannot be started)
+               Service-->>Player: Error 400 (battle cannot be started)
            else Pending
                Service->>Redis: SETNX lock:battle:{battleId}:begin (TTL=5s)
                alt Lock not acquired
-                   Service-->>Player: Error 409 (Another request is starting)
+                   Service-->>Player: Error 409 (another request is starting)
                else Lock acquired
                    Service->>DB: listMembers(battleId)
                    Service->>Service: check authorization (initiator or owner)
                    alt Not authorized
-                       Service-->>Player: Error 403 (Not authorized)
+                       Service-->>Player: Error 403 (not authorized)
                    else Authorized
                        Service->>DB: UPDATE battle (state=running, started=now)
+                       Service->>Redis: SADD member:battle:{battleId} <playerId>
                        Service->>Redis: PUBLISH battle:begin { battleId }
                        Service-->>Player: Battle started
                    end
@@ -305,10 +341,10 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
        participant Redis
    
        Player->>Service: POST /battles/:id/finish
-       Service->>DB: SELECT battle (check state)
+       Service->>DB: findById(battleId)
        alt not found
             DB-->>Service: null
-            Service-->>Player: Error 404 (Battle not found)
+            Service-->>Player: Error 404 (battle not found)
         else found
             alt not running
                 DB-->>Service: state != running
@@ -326,6 +362,7 @@ I’ve implemented a multi-layer guard system inside BattleService that leverage
                         Service->>DB: UPDATE battle.state = finished
                         Service->>Service: pick random winner + score
                         Service->>DB: UPSERT leaderboard (winnerGroupId, score, updatedAt)
+                        Service->>Redis: ZINCRBY leaderboard:24h <score> <winnerGroupId>
                         Service->>Redis: PUBLISH battle:finished { battleId, winnerGroupId, score }
                         Service-->>Player: Battle finished
                     end
