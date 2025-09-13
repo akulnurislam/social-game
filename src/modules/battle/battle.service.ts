@@ -138,7 +138,7 @@ export class BattleService {
   async joinBattle(playerId: string, battleId: string, role = 'participant') {
     const battle = await this.repo.findById(battleId);
     if (!battle) throw new AppException('Battle not found.', 404);
-    if (battle.state !== 'running') throw new AppException(`Cannot join battle.`, 400);
+    if (battle.state === 'finished') throw new AppException(`Cannot join battle.`, 400);
 
     // prevent duplicate join
     const existingMembers = await this.repo.listMembers(battleId);
