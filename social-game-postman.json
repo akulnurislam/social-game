@@ -1,0 +1,561 @@
+{
+  "info": {
+    "name": "social-game",
+    "description": "",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "battles",
+      "item": [
+        {
+          "name": "Begin Battle",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{URL}}/battles/:battleId/begin",
+              "protocol": "",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "battles",
+                ":battleId",
+                "begin"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "battleId",
+                  "value": "{{BattleID}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Create Battle",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{URL}}/battles",
+              "protocol": "",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "battles"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"group_attacker\": \"ac9c959e-4539-4eea-ba00-b290c0720486\",\n  \"group_defender\": \"aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaaa\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Finish Battle",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{URL}}/battles/:battleId/finish",
+              "protocol": "",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "battles",
+                ":battleId",
+                "finish"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "battleId",
+                  "value": "{{BattleID}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Join Battle",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{URL}}/battles/:battleId/join",
+              "protocol": "",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "battles",
+                ":battleId",
+                "join"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "battleId",
+                  "value": "{{BattleID}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Members Battle",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{URL}}/battles/:battleId/members",
+              "protocol": "",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "battles",
+                ":battleId",
+                "members"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "battleId",
+                  "value": "{{BattleID}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "groups",
+      "item": [
+        {
+          "name": "Create Group",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{URL}}/groups",
+              "protocol": "",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "groups"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"My Group\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Find Group",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{URL}}/groups/:groupId",
+              "protocol": "",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "groups",
+                ":groupId"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "groupId",
+                  "value": "{{GroupID}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Group List",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{URL}}/groups",
+              "protocol": "",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "groups"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        },
+        {
+          "name": "Join Group",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{URL}}/groups/:groupId/join",
+              "protocol": "",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "groups",
+                ":groupId",
+                "join"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "groupId",
+                  "value": "{{GroupID}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Leave Group",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{URL}}/groups/:groupId/leave",
+              "protocol": "",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "groups",
+                ":groupId",
+                "leave"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "groupId",
+                  "value": "{{GroupID}}"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Members Group",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{URL}}/groups/:groupId/members",
+              "protocol": "",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "groups",
+                ":groupId",
+                "members"
+              ],
+              "query": [],
+              "variable": [
+                {
+                  "key": "groupId",
+                  "value": "{{GroupID}}"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "leaderboards",
+      "item": [
+        {
+          "name": "Leaderboard List",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{URL}}/leaderboards",
+              "protocol": "",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "leaderboards"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "players",
+      "item": [
+        {
+          "name": "Create Player",
+          "event": [],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{URL}}/players",
+              "protocol": "",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "players"
+              ],
+              "query": [],
+              "variable": []
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"John\",\n  \"telegram_id\": \"1000000001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          }
+        },
+        {
+          "name": "Me",
+          "event": [],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "disabled": false,
+                "type": "default"
+              }
+            ],
+            "auth": {
+              "type": "noauth"
+            },
+            "description": "",
+            "url": {
+              "raw": "{{URL}}/players/me",
+              "protocol": "",
+              "host": [
+                "{{URL}}"
+              ],
+              "path": [
+                "players",
+                "me"
+              ],
+              "query": [],
+              "variable": []
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "URL",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "PlayerID",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "BattleID",
+      "value": "",
+      "type": "default"
+    },
+    {
+      "key": "GroupID",
+      "value": "",
+      "type": "default"
+    }
+  ]
+}

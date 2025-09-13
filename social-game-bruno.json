@@ -1,0 +1,672 @@
+{
+  "name": "social-game",
+  "version": "1",
+  "items": [
+    {
+      "type": "folder",
+      "name": "battles",
+      "filename": "battles",
+      "seq": 4,
+      "root": {
+        "request": {
+          "auth": {
+            "mode": "inherit"
+          }
+        },
+        "meta": {
+          "name": "battles",
+          "seq": 4
+        }
+      },
+      "items": [
+        {
+          "type": "http",
+          "name": "Begin Battle",
+          "filename": "Begin Battle.bru",
+          "seq": 2,
+          "settings": {
+            "encodeUrl": true
+          },
+          "tags": [],
+          "request": {
+            "url": "{{URL}}/battles/:battleId/begin",
+            "method": "POST",
+            "headers": [
+              {
+                "name": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "enabled": true
+              }
+            ],
+            "params": [
+              {
+                "name": "battleId",
+                "value": "{{BattleID}}",
+                "type": "path",
+                "enabled": true
+              }
+            ],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "inherit"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Create Battle",
+          "filename": "Create Battle.bru",
+          "seq": 1,
+          "settings": {
+            "encodeUrl": true
+          },
+          "tags": [],
+          "request": {
+            "url": "{{URL}}/battles",
+            "method": "POST",
+            "headers": [
+              {
+                "name": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "enabled": true
+              }
+            ],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"group_attacker\": \"ac9c959e-4539-4eea-ba00-b290c0720486\",\n  \"group_defender\": \"aaaaaaa1-aaaa-aaaa-aaaa-aaaaaaaaaaaa\"\n}",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {
+              "res": "const data = res.body;\n\nif (data && data.id) {\n  bru.setVar('BattleID', data.id);\n}"
+            },
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "inherit"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Finish Battle",
+          "filename": "Finish Battle.bru",
+          "seq": 3,
+          "settings": {
+            "encodeUrl": true
+          },
+          "tags": [],
+          "request": {
+            "url": "{{URL}}/battles/:battleId/finish",
+            "method": "POST",
+            "headers": [
+              {
+                "name": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "enabled": true
+              }
+            ],
+            "params": [
+              {
+                "name": "battleId",
+                "value": "{{BattleID}}",
+                "type": "path",
+                "enabled": true
+              }
+            ],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "inherit"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Join Battle",
+          "filename": "Join Battle.bru",
+          "seq": 4,
+          "settings": {
+            "encodeUrl": true
+          },
+          "tags": [],
+          "request": {
+            "url": "{{URL}}/battles/:battleId/join",
+            "method": "POST",
+            "headers": [
+              {
+                "name": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "enabled": true
+              }
+            ],
+            "params": [
+              {
+                "name": "battleId",
+                "value": "{{BattleID}}",
+                "type": "path",
+                "enabled": true
+              }
+            ],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "inherit"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Members Battle",
+          "filename": "Members Battle.bru",
+          "seq": 5,
+          "settings": {
+            "encodeUrl": true
+          },
+          "tags": [],
+          "request": {
+            "url": "{{URL}}/battles/:battleId/members",
+            "method": "GET",
+            "headers": [
+              {
+                "name": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "enabled": true
+              }
+            ],
+            "params": [
+              {
+                "name": "battleId",
+                "value": "{{BattleID}}",
+                "type": "path",
+                "enabled": true
+              }
+            ],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "inherit"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "groups",
+      "filename": "groups",
+      "seq": 3,
+      "root": {
+        "request": {
+          "auth": {
+            "mode": "inherit"
+          }
+        },
+        "meta": {
+          "name": "groups",
+          "seq": 3
+        }
+      },
+      "items": [
+        {
+          "type": "http",
+          "name": "Create Group",
+          "filename": "Create Group.bru",
+          "seq": 1,
+          "settings": {
+            "encodeUrl": true
+          },
+          "tags": [],
+          "request": {
+            "url": "{{URL}}/groups",
+            "method": "POST",
+            "headers": [
+              {
+                "name": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "enabled": true
+              }
+            ],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"name\": \"My Group\"\n}",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {
+              "res": "const data = res.body;\n\nif (data && data.id) {\n  bru.setVar('GroupID', data.id);\n}"
+            },
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "inherit"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Find Group",
+          "filename": "Find Group.bru",
+          "seq": 3,
+          "settings": {
+            "encodeUrl": true
+          },
+          "tags": [],
+          "request": {
+            "url": "{{URL}}/groups/:groupId",
+            "method": "GET",
+            "headers": [
+              {
+                "name": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "enabled": true
+              }
+            ],
+            "params": [
+              {
+                "name": "groupId",
+                "value": "{{GroupID}}",
+                "type": "path",
+                "enabled": true
+              }
+            ],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "inherit"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Group List",
+          "filename": "Group List.bru",
+          "seq": 2,
+          "settings": {
+            "encodeUrl": true
+          },
+          "tags": [],
+          "request": {
+            "url": "{{URL}}/groups",
+            "method": "GET",
+            "headers": [
+              {
+                "name": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "enabled": true
+              }
+            ],
+            "params": [],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "inherit"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Join Group",
+          "filename": "Join Group.bru",
+          "seq": 5,
+          "settings": {
+            "encodeUrl": true
+          },
+          "tags": [],
+          "request": {
+            "url": "{{URL}}/groups/:groupId/join",
+            "method": "POST",
+            "headers": [
+              {
+                "name": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "enabled": true
+              }
+            ],
+            "params": [
+              {
+                "name": "groupId",
+                "value": "{{GroupID}}",
+                "type": "path",
+                "enabled": true
+              }
+            ],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "inherit"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Leave Group",
+          "filename": "Leave Group.bru",
+          "seq": 6,
+          "settings": {
+            "encodeUrl": true
+          },
+          "tags": [],
+          "request": {
+            "url": "{{URL}}/groups/:groupId/leave",
+            "method": "POST",
+            "headers": [
+              {
+                "name": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "enabled": true
+              }
+            ],
+            "params": [
+              {
+                "name": "groupId",
+                "value": "{{GroupID}}",
+                "type": "path",
+                "enabled": true
+              }
+            ],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "inherit"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Members Group",
+          "filename": "Members Group.bru",
+          "seq": 4,
+          "settings": {
+            "encodeUrl": true
+          },
+          "tags": [],
+          "request": {
+            "url": "{{URL}}/groups/:groupId/members",
+            "method": "GET",
+            "headers": [
+              {
+                "name": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "enabled": true
+              }
+            ],
+            "params": [
+              {
+                "name": "groupId",
+                "value": "{{GroupID}}",
+                "type": "path",
+                "enabled": true
+              }
+            ],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "inherit"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "leaderboards",
+      "filename": "leaderboards",
+      "seq": 4,
+      "root": {
+        "request": {
+          "auth": {
+            "mode": "inherit"
+          }
+        },
+        "meta": {
+          "name": "leaderboards",
+          "seq": 4
+        }
+      },
+      "items": [
+        {
+          "type": "http",
+          "name": "Leaderboard List",
+          "filename": "Leaderboard List.bru",
+          "seq": 1,
+          "settings": {
+            "encodeUrl": true
+          },
+          "tags": [],
+          "request": {
+            "url": "{{URL}}/leaderboards",
+            "method": "GET",
+            "headers": [
+              {
+                "name": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "enabled": true
+              }
+            ],
+            "params": [],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "inherit"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "folder",
+      "name": "players",
+      "filename": "players",
+      "seq": 2,
+      "root": {
+        "request": {
+          "auth": {
+            "mode": "inherit"
+          }
+        },
+        "meta": {
+          "name": "players",
+          "seq": 2
+        }
+      },
+      "items": [
+        {
+          "type": "http",
+          "name": "Create Player",
+          "filename": "Create Player.bru",
+          "seq": 1,
+          "settings": {
+            "encodeUrl": true
+          },
+          "tags": [],
+          "request": {
+            "url": "{{URL}}/players",
+            "method": "POST",
+            "headers": [],
+            "params": [],
+            "body": {
+              "mode": "json",
+              "json": "{\n  \"username\": \"John\",\n  \"telegram_id\": \"1000000001\"\n}",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {
+              "res": "const data = res.body;\n\nif (data && data.id) {\n  bru.setVar('PlayerID', data.id);\n}"
+            },
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "inherit"
+            }
+          }
+        },
+        {
+          "type": "http",
+          "name": "Me",
+          "filename": "Me.bru",
+          "seq": 2,
+          "settings": {
+            "encodeUrl": true
+          },
+          "tags": [],
+          "request": {
+            "url": "{{URL}}/players/me",
+            "method": "GET",
+            "headers": [
+              {
+                "name": "X-Player-ID",
+                "value": "{{PlayerID}}",
+                "enabled": true
+              }
+            ],
+            "params": [],
+            "body": {
+              "mode": "none",
+              "formUrlEncoded": [],
+              "multipartForm": [],
+              "file": []
+            },
+            "script": {},
+            "vars": {},
+            "assertions": [],
+            "tests": "",
+            "docs": "",
+            "auth": {
+              "mode": "inherit"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "environments": [],
+  "root": {
+    "request": {
+      "vars": {
+        "req": [
+          {
+            "name": "URL",
+            "value": "http://localhost:3000",
+            "enabled": true,
+            "local": false,
+            "uid": "8dJw3jkrL344Yq33RcFRm"
+          }
+        ]
+      }
+    }
+  },
+  "brunoConfig": {
+    "version": "1",
+    "name": "social-game",
+    "type": "collection",
+    "ignore": [
+      "node_modules",
+      ".git"
+    ],
+    "size": 0.0037527084350585938,
+    "filesCount": 19
+  }
+}
