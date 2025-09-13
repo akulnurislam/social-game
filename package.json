@@ -16,17 +16,20 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsx src/build.ts",
+    "build": "tsx scripts/build.ts",
     "start": "node -r dotenv/config dist/index.js",
     "start:api": "node -r dotenv/config dist/index.js api",
     "start:ws": "node -r dotenv/config dist/index.js ws",
+    "start:bot": "node -r dotenv/config dist/index.js bot",
     "dev": "tsx --require dotenv/config --watch src/index.ts",
-    "migrate": "tsx --require dotenv/config src/migrate.ts"
+    "migrate": "tsx --require dotenv/config scripts/migrate.ts",
+    "client:ws": "tsx --require dotenv/config scripts/ws-client.ts"
   },
   "devDependencies": {
     "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.3",
     "@types/node": "^24.3.1",
+    "@types/node-telegram-bot-api": "^0.64.11",
     "@types/pg": "^8.15.5",
     "@types/validator": "^13.15.3",
     "@types/ws": "^8.18.1",
@@ -38,6 +41,7 @@
     "dotenv": "^17.2.2",
     "express": "^5.1.0",
     "ioredis": "^5.7.0",
+    "node-telegram-bot-api": "^0.66.0",
     "pg": "^8.16.3",
     "validator": "^13.15.15",
     "ws": "^8.18.3"
